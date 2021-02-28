@@ -17,9 +17,9 @@ import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 
-class Network(nn.Module):
+class S_Network(nn.Module):
     def __init__(self):
-        super(Network, self).__init__()
+        super(S_Network, self).__init__()
         
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=48, kernel_size=5, padding=2)
         self.conv2 = nn.Conv2d(in_channels=48, out_channels=64, kernel_size=5, padding=2)
@@ -113,88 +113,88 @@ class Network(nn.Module):
         
         return output
 
-def train(log_interval, model, device, train_loader, optimizer, epoch):
-    model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
-        optimizer.zero_grad()
-        output = model(data)
-        loss = F.cross_entropy(output, target)
-        loss.backward()
-        optimizer.step()
-        if batch_idx % log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'. format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+# def train(log_interval, model, device, train_loader, optimizer, epoch):
+#     model.train()
+#     for batch_idx, (data, target) in enumerate(train_loader):
+#         data, target = data.to(device), target.to(device)
+#         optimizer.zero_grad()
+#         output = model(data)
+#         loss = F.cross_entropy(output, target)
+#         loss.backward()
+#         optimizer.step()
+#         if batch_idx % log_interval == 0:
+#             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'. format(
+#                 epoch, batch_idx * len(data), len(train_loader.dataset),
+#                 100. * batch_idx / len(train_loader), loss.item()))
             
-def test(model, device, test_loader):
-    model.eval()
-    test_loss = 0
-    correct = 0
-    accuracy = 0
+# def test(model, device, test_loader):
+#     model.eval()
+#     test_loss = 0
+#     correct = 0
+#     accuracy = 0
     
-    with torch.no_grad():
-        for data, target in test_loader: 
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            test_loss += F.cross_entropy(output, target).item()
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
+#     with torch.no_grad():
+#         for data, target in test_loader: 
+#             data, target = data.to(device), target.to(device)
+#             output = model(data)
+#             test_loss += F.cross_entropy(output, target).item()
+#             pred = output.argmax(dim=1, keepdim=True)
+#             correct += pred.eq(target.view_as(pred)).sum().item()
             
-    test_loss /= len(test_loader.dataset)
-    accuracy = 100. * correct / len(test_loader.dataset)
+#     test_loss /= len(test_loader.dataset)
+#     accuracy = 100. * correct / len(test_loader.dataset)
     
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+#     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+#         test_loss, correct, len(test_loader.dataset),
+#         100. * correct / len(test_loader.dataset)))
     
-    return accuracy 
+#     return accuracy 
 
-batch_size = 64
-test_batch_size = 64
-epochs = 14
-lr = .001
-log_interval = 10
-acc = []    
+# batch_size = 64
+# test_batch_size = 64
+# epochs = 14
+# lr = .001
+# log_interval = 10
+# acc = []    
        
-transform = transforms.Compose([
-    transforms.CenterCrop((28,28)),
-    transforms.ToTensor()
-    #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-    ])        
+# transform = transforms.Compose([
+#     transforms.CenterCrop((28,28)),
+#     transforms.ToTensor()
+#     #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+#     ])        
 
-train_set = torchvision.datasets.SVHN('../data', split='train', transform=transform, target_transform=None, download=True) 
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)  
+# train_set = torchvision.datasets.SVHN('../data', split='train', transform=transform, target_transform=None, download=True) 
+# train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)  
 
-test_a_set = torchvision.datasets.SVHN('../data', split='test', transform=transforms.ToTensor(),download=True)
-test_a_loader = torch.utils.data.DataLoader(test_a_set, batch_size=batch_size, shuffle=True)
+# test_a_set = torchvision.datasets.SVHN('../data', split='test', transform=transforms.ToTensor(),download=True)
+# test_a_loader = torch.utils.data.DataLoader(test_a_set, batch_size=batch_size, shuffle=True)
 
-test_set = torchvision.datasets.SVHN('../data', split='test', transform=transform, target_transform=None, download=True)
-test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
+# test_set = torchvision.datasets.SVHN('../data', split='test', transform=transform, target_transform=None, download=True)
+# test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
 
-images_train, labels_train = next(iter(train_loader)) #[128, 3, 28, 28], [128]
-images_test, labels_test = next(iter(test_loader))    #[128, 3, 28, 28], [128]
-images_test_a, labels_test_a = next(iter(test_a_set))
+# images_train, labels_train = next(iter(train_loader)) #[128, 3, 28, 28], [128]
+# images_test, labels_test = next(iter(test_loader))    #[128, 3, 28, 28], [128]
+# images_test_a, labels_test_a = next(iter(test_a_set))
 
-use_cuda = torch.cuda.is_available()
-device = torch.device("cuda" if use_cuda else "cpu")
+# use_cuda = torch.cuda.is_available()
+# device = torch.device("cuda" if use_cuda else "cpu")
 
-model = Network().to(device)
-optimizer = optim.Adam(model.parameters(), lr= lr)
+# model = S_Network().to(device)
+# optimizer = optim.Adam(model.parameters(), lr= lr)
 
-for epoch in range(1, epochs + 1):
-    train(log_interval, model, device, train_loader, optimizer, epoch)
-    acc.append(test(model, device, test_loader))
+# for epoch in range(1, epochs + 1):
+#     train(log_interval, model, device, train_loader, optimizer, epoch)
+#     acc.append(test(model, device, test_loader))
 
-print(acc)
+# print(acc)
     
-PATH = './models/MNISTandSVHN/SVHN.pth'
-torch.save(model.state_dict(), PATH)
+# PATH = './models/MNISTandSVHN/SVHN.pth'
+# torch.save(model.state_dict(), PATH)
 
-plt.plot(acc)
-plt.title("SVHN Accuracy over Epochs")
-plt.xlabel("epoch")
-plt.ylabel("accuracy")
+# plt.plot(acc)
+# plt.title("SVHN Accuracy over Epochs")
+# plt.xlabel("epoch")
+# plt.ylabel("accuracy")
 
 
 

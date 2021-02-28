@@ -31,8 +31,8 @@ class create_multiview_data(Dataset):
         label = self.data_class
         imagePath_one = self.root_one + self.dataset_one[idx]
         imagePath_two = self.root_two + self.dataset_two[idx]
-        inp_one = Image.open(imagePath_one)
-        inp_two = Image.open(imagePath_two)
+        inp_one = Image.open(imagePath_one).convert('L') 
+        inp_two = Image.open(imagePath_two).convert('RGB') 
         if self.is_transform:
             inp_one = self.is_transform(inp_one)
             inp_two = self.is_transform(inp_two)
@@ -69,9 +69,6 @@ class SVHN_Network(nn.Module):
         self.maxpool7 = nn.MaxPool2d(kernel_size=2, stride=2, padding=1)
         
         self.dropout = nn.Dropout(0.2)
-      
-        self.fc1 = nn.Linear(50176, 128)
-        self.fc2 = nn.Linear(128, 10)
         
     def forward(self, x):
         x = self.conv1(x)        # [64, 48, 28, 28]
@@ -120,18 +117,7 @@ class SVHN_Network(nn.Module):
         x = self.batchnorm8(x)
         x = F.relu(x)
         x = self.dropout(x)
-        
-        # Fusion will happen here 
-        
-        # x = torch.flatten(x, 1)   # [64, 50176]  
-        # x = self.fc1(x)           # [64, 128]       
-        # x = F.relu(x)
-        # x = self.dropout(x)             
-        # x = self.fc2(x)           # [64, 10]          
-        
-        # output = F.log_softmax(x, dim=1) # [64, 10]
-        
-        
+
         return x    
     
 class MNIST_Network(nn.Module):
@@ -142,10 +128,7 @@ class MNIST_Network(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, kernel_size = 3, stride = 1, padding = 1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size = 3, stride = 1, padding = 1)
         self.conv4 = nn.Conv2d(128, 256, kernel_size = 3, stride = 1, padding = 1)
-        self.dropout1 = nn.Dropout(0.25)
-        self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(50176, 128)
-        self.fc2 = nn.Linear(128, 10)
+        self.dropout = nn.Dropout(0.2)
 
     def forward(self, x): 
         x = self.conv0(x)                #[64, 16, 28, 28]
@@ -159,27 +142,63 @@ class MNIST_Network(nn.Module):
         x = self.conv4(x)                #[64, 256, 28, 28]
         x = F.relu(x)
         x = F.max_pool2d(x, 2)           #[64, 256, 14, 14]
-        x = self.dropout1(x)             #[64, 256, 14, 14]
+        x = self.dropout(x)             #[64, 256, 14, 14]
         
-        # Fusion will happen here 
-        
-        # x = torch.flatten(x, 1)          #[64, 50176]
-        # x = self.fc1(x)                  #[64, 128]
-        # x = F.relu(x)
-        # x = self.dropout2(x)             #[64, 128]
-        # x = self.fc2(x)                  #[64, 10]
-        
-        # output = F.log_softmax(x, dim=1) #[64, 10]
-      
         return x
     
-#     root_one = '/data/MNISTandSVHN/MNIST/' + data_class + '/'
-#     root_two = '/data/MNISTandSVHN/SVHN/' + data_class + '/'
+class Fusion_Layer(nn.Module):
+    def __init__(self):
+        super(Fusion_Layer, self).__init__()
+        self.fusion = nn.Linear(in_features = 2 * 256 * 14 * 14, out_features = 256 * 14 * 14)
+        
+    def forward(self, class_one, class_two):
+        flatten_class_one = torch.flatten(class_one, 1)          #[64, 50176]
+        flatten_class_two = torch.flatten(class_two, 1)
+        combined_classes = torch.cat((flatten_class_one, flatten_class_two), 1)
+        
+        x = self.fusion(combined_classes)
+        
+        return x
     
-#     label = data_class
+class Post_Fusion_Layer(nn.Module):
+    def __init__(self):
+        super(Post_Fusion_Layer, self).__init__()
+        self.dropout = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(50176, 128)
+        self.fc2 = nn.Linear(128, 10)
+        
+    def forward(self, x):
+        
+        x = self.fc1(x)                  #[64, 128]
+        x = F.relu(x)
+        x = self.dropout(x)             #[64, 128]
+        x = self.fc2(x)                  #[64, 10]
+        
+        output = F.log_softmax(x, dim=1) #[64, 10]
+      
+        return output
     
-#     data
+class Full_Network(nn.Module):
+    def __init__(self, train_pre_net = False):
+        super(Full_Network, self).__init__()
+        self.pre_net_one = MNIST_Network()
+        self.pre_net_two = SVHN_Network()
+        self.fuse = Fusion_Layer()
+        self.post_net = Post_Fusion_Layer()
+        self.train_pre_net = train_pre_net
+        
+        if self.train_pre_net == False:
+            freeze(self.pre_net_one)
+            freeze(self.pre_net_two)
+    
+    def forward(self, class_mnist, class_svhn):
+        pre_c1_x = self.pre_net_one(class_mnist)
+        pre_c2_x = self.pre_net_two(class_svhn)
+        fusion = self.fuse(pre_c1_x, pre_c2_x)
+        output = self.post_net(fusion)
 
+        return output
         
-        
-# create_multiview_dataset()
+def freeze(model):
+    for params in model.parameters():
+        params.requires_grad = False           
