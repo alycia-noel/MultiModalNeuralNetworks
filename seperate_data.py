@@ -8,22 +8,28 @@ Created on Tue Feb  9 11:33:10 2021
 import numpy as np
 import torch
 import torchvision
-from torchvision import datasets, transforms 
+from torchvision import transforms#, datasets
 import matplotlib.pyplot as plt
 
 plt.ioff()
 
-def save(image, i, data_class):
+def save(image, i, data_class, train_or_test = 'train'):
+    if train_or_test == 'train':
+        folder = folder_train
+    else: 
+        folder = folder_test
     plt.axis('off')
     plt.imshow((image*255).astype(np.uint8))
     save_dir = folder + str(data_class) + '/' + str(i) + '.png'
     plt.savefig(save_dir, bbox_inches='tight', pad_inches = 0)
     plt.close()
 
-#folder = './data/MNISTandSVHN/MNIST/'
-folder = './data/MNISTandSVHN/SVHN/'
+# folder_train = './data/NumberClassification/MNIST/train/'
+# folder_test = './data/NumberClassification/MNIST/test/'
+folder_train = './data/NumberClassification/SVHN/train/'
+folder_test = './data/NumberClassification/SVHN/test/'
 
-'''Data for MNIST'''
+# '''Data for MNIST'''
 # transform = transforms.Compose([
 #     transforms.ToTensor(),
 #     transforms.Normalize((0.1307,), (0.3981,))
@@ -103,16 +109,27 @@ for i in range (0, 73257): #60000 for MNIST and 73257 for SVHN
         c = counter9
     #print(data_class, c, counter0, counter1, counter2, counter3, counter4, counter5, counter6, counter7, counter8, counter9)
     img = img.numpy().transpose((1,2,0))
-    save(img, c, data_class)
+    save(img, c, data_class, train_or_test = 'train')
     
     if i % 1000 == 0:
         print('Done: {} \tLeft: {}'. format(i, 73257 - i))
+
+counter0 = 0
+counter1 = 0
+counter2 = 0
+counter3 = 0
+counter4 = 0
+counter5 = 0
+counter6 = 0
+counter7 = 0 
+counter8 = 0 
+counter9 = 0
         
 for i in range (0, 26032): #10000 for MNIST and 26032 for SVHN
     c = 0
     img = images_test[i]
     data_class = labels_test[i].item()
-    if data_class == 10: #10 for SVHN or 0 for MNIST
+    if data_class == 0: #10 for SVHN or 0 for MNIST
         counter0 = counter0 + 1
         c = counter0
     elif data_class == 1:
@@ -144,7 +161,7 @@ for i in range (0, 26032): #10000 for MNIST and 26032 for SVHN
         c = counter9
    
     img = img.numpy().transpose((1,2,0))
-    save(img, c, data_class)
+    save(img, c, data_class, train_or_test = 'test')
     
     if i % 1000 == 0:
         print('Done: {} \tLeft: {}'. format(i, 26032 - i))       

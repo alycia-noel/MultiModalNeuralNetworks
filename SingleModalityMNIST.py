@@ -12,123 +12,97 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms
+from torchvision import transforms, datasets
 import matplotlib.pyplot as plt
+from torch import optim 
+from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+from helper_functions import plot_confusion_matrix, plot_roc, train, test
 
 class M_Network(nn.Module):
     def __init__(self):
         super(M_Network, self).__init__()
-        self.conv0 = nn.Conv2d(1, 16, kernel_size = 3, stride = 1, padding = 1)
-        self.conv1 = nn.Conv2d(16, 32, kernel_size = 3, stride = 1, padding = 1)
+        self.conv0 = nn.Conv2d(1, 32, kernel_size = 3, stride = 1, padding = 1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size = 3, stride = 1, padding = 1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size = 3, stride = 1, padding = 1)
-        self.conv4 = nn.Conv2d(128, 256, kernel_size = 3, stride = 1, padding = 1)
+        self.conv4 = nn.Conv2d(128, 192, kernel_size = 3, stride = 1, padding = 4)
         self.dropout = nn.Dropout(0.2)
         
-        self.fc1 = nn.Linear(50176, 128)
+        self.fc1 = nn.Linear(6912, 128)
         self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x): 
         x = self.conv0(x)                #[64, 16, 28, 28]
         x = F.relu(x)
-        x = self.conv1(x)                #[64, 32, 28, 28]
+        x = F.max_pool2d(x, 2)           #[64, 16, 14, 14]
+
+        x = self.conv2(x)                #[64, 64, 14, 14]
         x = F.relu(x)
-        x = self.conv2(x)                #[64, 64, 28, 28]
-        x = F.relu(x)
-        x = self.conv3(x)                #[64, 128, 28, 28]
-        x = F.relu(x)
-        x = self.conv4(x)                #[64, 256, 28, 28]
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)           #[64, 256, 14, 14]
-        x = self.dropout(x)             #[64, 256, 14, 14]
         
-        # Fusion will happen here 
+        x = self.conv3(x)                #[64, 128, 14, 14]
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)           #[64, 128, 7, 7]
         
-        x = torch.flatten(x, 1)          #[64, 50176]
+        x = self.conv4(x)                #[64, 192, 13, 13]
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)           #[64, 192, 6, 6]
+        x = self.dropout(x)              #[64, 192, 6, 6]
+        
+        x = torch.flatten(x, 1)          #[64, 6912]
         x = self.fc1(x)                  #[64, 128]
         x = F.relu(x)
-        x = self.dropout(x)             #[64, 128]
+        x = self.dropout(x)              #[64, 128]
         x = self.fc2(x)                  #[64, 10]
         
         output = F.log_softmax(x, dim=1) #[64, 10]
       
         return output
     
-# def train(log_interval, model, device, train_loader, optimizer, epoch):
-#     model.train()
-#     for batch_idx, (data, target) in enumerate(train_loader):
-#         data, target = data.to(device), target.to(device)
-#         optimizer.zero_grad()
-#         output = model(data)
-#         loss = F.cross_entropy(output, target)
-#         loss.backward()
-#         optimizer.step()
-#         if batch_idx % log_interval == 0:
-#             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'. format(
-#                 epoch, batch_idx * len(data), len(train_loader.dataset),
-#                 100. * batch_idx / len(train_loader), loss.item()))
-                
-# def test(model, device, test_loader):
-#     model.eval()
-#     test_loss = 0
-#     correct = 0
-#     accuracy = 0
+def run_mnist_training(batch_size, epochs, lr, log_interval, device, file):    
+    test_batch_size = 1000
+    accuracy = []
+    acc = 0
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize((0.1307,), (0.3981,))
+                                    ])
+
+    train_set = datasets.MNIST('../data', train=True, download=True, transform=transform)
+    test_set = datasets.MNIST('../data', train=False, transform=transform)
     
-#     with torch.no_grad():
-#         for data, target in test_loader: 
-#             data, target = data.to(device), target.to(device)
-#             output = model(data)
-#             test_loss += F.cross_entropy(output, target, reduction='sum').item()
-#             pred = output.argmax(dim=1, keepdim=True)
-#             correct += pred.eq(target.view_as(pred)).sum().item()
-            
-#     test_loss /= len(test_loader.dataset)
-#     accuracy = 100. * correct / len(test_loader.dataset)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=test_batch_size)
     
-#     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-#         test_loss, correct, len(test_loader.dataset),
-#         100. * correct / len(test_loader.dataset)))
+    PATH = './models/MNISTandSVHN/MNIST.pth'
+
+    model = M_Network().to(device)
+    optimizer = optim.SGD(model.parameters(), lr= lr)
+
+    #Training the model
+    for epoch in range(1, epochs + 1):
+        accuracy.append(train(log_interval, model, device, train_loader, optimizer, epoch))
+
+    torch.save(model.state_dict(), PATH)
     
-#     return accuracy 
- 
-# batch_size = 64
-# test_batch_size = 1000
-# epochs = 14
-# lr = .006
-# seed = 1
-# log_interval = 10
-# save_model = False
-# accuracy = []
-
-# use_cuda = torch.cuda.is_available()
-# torch.manual_seed(seed)
-# device = torch.device("cuda" if use_cuda else "cpu")
+    #Generating Confusion Matrix for test
+    _, true, pred = test(model, device, test_loader)
     
-# transform = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.1307,), (0.3981,))
-#     ])
+    cm = confusion_matrix(true, pred)
+    names = ('0','1','2','3','4','5','6','7','8','9')
+    plt.figure(figsize=(10,10))
+    plot_confusion_matrix(cm, names, t='MNIST Confusion Matrix' )
 
-# train_set = datasets.MNIST('../data', train=True, download=True, transform=transform)
-# test_set = datasets.MNIST('../data', train=False, transform=transform)
+    f1 = f1_score(true, pred, average='micro')
+    acc = accuracy_score(true, pred)
 
-# train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size)
-# test_loader = torch.utils.data.DataLoader(test_set, batch_size=test_batch_size)
+    #Write test acc to file
+    file1 = open(file, "a")
+    write_string = "MNIST Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+    file1.write(write_string)
+    file1.close()
+    
+    #Plotting ROC 
+    plot_roc(model, device, test_loader, num_classes=10, t='MNIST ROC', mode='single')
+    
+    return accuracy
 
-# model = M_Network().to(device)
-# optimizer = optim.Adam(model.parameters(), lr= lr)
 
-# for epoch in range(1, epochs + 1):
-#     train(log_interval, model, device, train_loader, optimizer, epoch)
-#     accuracy.append(test(model, device, test_loader))
 
-# print(accuracy)
-
-# PATH = './models/MNISTandSVHN/MNIST.pth'
-# torch.save(model.state_dict(), PATH)
-
-# plt.plot(accuracy)
-# plt.title("MNIST Accuracy over Epochs")
-# plt.xlabel("epoch")
-# plt.ylabel("accuracy")
