@@ -1,0 +1,5 @@
+MNIST Accuracy:                       0.9853	 F1: 0.9853
+SVHN Accuracy:                        0.9335	 F1: 0.9335049170251998
+With Pre-Fusion Training Accuracy:    0.9871	 F1: 0.9871
+Without Pre-Fusion Training Accuracy: 0.9408	 F1: 0.9408000000000001
+Joint Training Accuracy:              0.9289	 F1: 0.9289

@@ -8,8 +8,6 @@ Created on Wed Feb  3 11:42:23 2021
 @author: ancarey
 """
 from __future__ import print_function
-
-from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

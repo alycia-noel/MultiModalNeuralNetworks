@@ -1,0 +1,1 @@
+MNIST Accuracy: 0.9845	 F1: 0.9845

@@ -14,11 +14,21 @@ from sklearn.metrics import roc_curve, auc
 import itertools
 from itertools import cycle
 import numpy as np 
+from sklearn.model_selection import train_test_split
+from torch.utils.data import Subset
 
 def show_image(img):
     print(img[0].shape)
     img = img[0].permute(1, 2, 0)
     plt.imshow(img)
+
+def train_val_test_split(dataset, splits):
+    datasets = {}
+    first_idx, second_idx = train_test_split(list(range(dataset.__len__())), test_size=splits[1])
+    datasets['train'] = Subset(dataset, first_idx)
+    datasets['test'] = Subset(dataset, second_idx)
+        
+    return datasets
     
 def train(log_interval, model, device, train_loader, optimizer, epoch):
     model.train()
@@ -145,19 +155,27 @@ def test_class_probabilities(model, device, test_loader, which_class):
     probabilities = []
     with torch.no_grad():
         for batch, data in enumerate(test_loader):
-            mnist_img, svhn_img, labels = data
-            output = model(mnist_img.to('cuda'), svhn_img.to('cuda'))
+            ir_img, rgb_img, labels = data
+            output = model(ir_img.to('cuda'), rgb_img.to('cuda'))
             prediction = output.argmax(dim=1, keepdim=True)
             actuals.extend(labels.view_as(prediction) == which_class)
             probabilities.extend(np.exp(output[:, which_class].cpu().detach().numpy()))
     return [i.item() for i in actuals], [i.item() for i in probabilities]
 
-def plot_acc_vs_epoch(acc_1, acc_2, acc_3, acc_4, acc_5):
-    plt.plot(acc_1, label='MNIST')
-    plt.plot(acc_2, label='SVHN')
+def plot_acc_vs_epoch(acc_1, acc_2, acc_3, acc_4, acc_5, acc_6,):
+    plt.plot(acc_1, label='IR')
+    plt.plot(acc_2, label='RGB')
     plt.plot(acc_3, label='Pre-Train')
     plt.plot(acc_4, label='W/O Pre-train')
-    plt.plot(acc_5, label='Joint')
+    plt.plot(acc_5, label='Joint - SD')
+    plt.plot(acc_6, label='Joint - FC')
+    plt.legend(loc = 4)
+    plt.title("Training Accuracy over Epochs")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy %")
+    
+def plot_acc_vs_epoch_single(acc_1, name):
+    plt.plot(acc_1, label=name)
     plt.legend(loc = 4)
     plt.title("Training Accuracy over Epochs")
     plt.xlabel("Epoch")

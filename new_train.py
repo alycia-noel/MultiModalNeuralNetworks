@@ -20,7 +20,7 @@ from PIL import Image
 #import itertools
 #from itertools import *
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
-from helper_functions import plot_acc_vs_epoch, plot_confusion_matrix, plot_roc
+from helper_functions import plot_acc_vs_epoch, plot_confusion_matrix, plot_roc,  plot_acc_vs_epoch_single
 import pickle
 ''' ================= Methods ================= '''
 def initialize_network(mode, load_weights, train_pre):
@@ -204,98 +204,99 @@ print("Independent Training:")
 mnist_acc = run_mnist_training(batch_size, MNIST_epochs, MNIST_lr, log_interval, device, file)
 print("*** MNIST Trained ")
 
-svhn_acc = run_svhn_training(batch_size, SVHN_epochs, SVHN_lr, log_interval, device, file)
-print("*** SVHN Trained ")
+# svhn_acc = run_svhn_training(batch_size, SVHN_epochs, SVHN_lr, log_interval, device, file)
+# print("*** SVHN Trained ")
 
-''' ================= With Pre-Fusion Training ================= '''
-mode = 'w/ pre-training'
-pre_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\MNISTandSVHN\\Pre_fusion_train_Full_Net.pth"
-pre_train_full_net = initialize_network(mode, load_weights = True, train_pre= True)
-with_pre_training_loss, with_pre_training_acc = train_full_net(mode, pre_train_full_net, lr, pre_train_path)
+# ''' ================= With Pre-Fusion Training ================= '''
+# mode = 'w/ pre-training'
+# pre_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\MNISTandSVHN\\Pre_fusion_train_Full_Net.pth"
+# pre_train_full_net = initialize_network(mode, load_weights = True, train_pre= True)
+# with_pre_training_loss, with_pre_training_acc = train_full_net(mode, pre_train_full_net, lr, pre_train_path)
 
-pre_train_lo, pre_train_acc, pre_train_pred, pre_train_true = test_full_net(mode, pre_train_full_net)
+# pre_train_lo, pre_train_acc, pre_train_pred, pre_train_true = test_full_net(mode, pre_train_full_net)
 
-cm = confusion_matrix(pre_train_true, pre_train_pred)
-names = ('0','1','2','3','4','5','6','7','8','9')
-plt.figure(figsize=(10,10))
-plot_confusion_matrix(cm, names, t='With Pre-Fusion Training Confusion Matrix')
+# cm = confusion_matrix(pre_train_true, pre_train_pred)
+# names = ('0','1','2','3','4','5','6','7','8','9')
+# plt.figure(figsize=(10,10))
+# plot_confusion_matrix(cm, names, t='With Pre-Fusion Training Confusion Matrix')
 
-f1 = f1_score(pre_train_true, pre_train_pred, average='micro')
-acc = accuracy_score(pre_train_true, pre_train_pred)
+# f1 = f1_score(pre_train_true, pre_train_pred, average='micro')
+# acc = accuracy_score(pre_train_true, pre_train_pred)
 
-file1 = open(file, "a")
-write_string = "With Pre-Fusion Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
-file1.write(write_string)
-file1.close()
+# file1 = open(file, "a")
+# write_string = "With Pre-Fusion Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+# file1.write(write_string)
+# file1.close()
 
-plot_roc(pre_train_full_net, device, test_loader, num_classes=10, t='With Pre-Fusion Training ROC', mode='multi')
+# plot_roc(pre_train_full_net, device, test_loader, num_classes=10, t='With Pre-Fusion Training ROC', mode='multi')
 
-''' ================= Without Pre-Fusion Training ================= '''
-mode = 'w/o pre-training'
-wo_pre_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\MNISTandSVHN\\Without_Pre_fusion_train_Full_Net.pth"
-wo_pre_train_full_net = initialize_network(mode, load_weights = True, train_pre= False)
-wo_pre_training_loss, wo_pre_training_acc = train_full_net(mode, wo_pre_train_full_net, lr, wo_pre_train_path)
+# ''' ================= Without Pre-Fusion Training ================= '''
+# mode = 'w/o pre-training'
+# wo_pre_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\MNISTandSVHN\\Without_Pre_fusion_train_Full_Net.pth"
+# wo_pre_train_full_net = initialize_network(mode, load_weights = True, train_pre= False)
+# wo_pre_training_loss, wo_pre_training_acc = train_full_net(mode, wo_pre_train_full_net, lr, wo_pre_train_path)
 
-wo_pre_train_lo, wo_pre_train_acc, wo_pre_train_pred, wo_pre_train_true = test_full_net(mode, wo_pre_train_full_net)
+# wo_pre_train_lo, wo_pre_train_acc, wo_pre_train_pred, wo_pre_train_true = test_full_net(mode, wo_pre_train_full_net)
 
-cm = confusion_matrix(wo_pre_train_true, wo_pre_train_pred)
-names = ('0','1','2','3','4','5','6','7','8','9')
-plt.figure(figsize=(10,10))
-plot_confusion_matrix(cm, names, t='Without Pre-Fusion Training Confusion Matrix')
+# cm = confusion_matrix(wo_pre_train_true, wo_pre_train_pred)
+# names = ('0','1','2','3','4','5','6','7','8','9')
+# plt.figure(figsize=(10,10))
+# plot_confusion_matrix(cm, names, t='Without Pre-Fusion Training Confusion Matrix')
 
-f1 = f1_score(wo_pre_train_true, wo_pre_train_pred, average='micro')
-acc = accuracy_score(wo_pre_train_true, wo_pre_train_pred)
+# f1 = f1_score(wo_pre_train_true, wo_pre_train_pred, average='micro')
+# acc = accuracy_score(wo_pre_train_true, wo_pre_train_pred)
 
-file1 = open(file, "a")
-write_string = "Without Pre-Fusion Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
-file1.write(write_string)
-file1.close()
+# file1 = open(file, "a")
+# write_string = "Without Pre-Fusion Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+# file1.write(write_string)
+# file1.close()
 
-plot_roc(wo_pre_train_full_net, device, test_loader, num_classes=10, t='Without Pre-Fusion Training ROC', mode='multi')
+# plot_roc(wo_pre_train_full_net, device, test_loader, num_classes=10, t='Without Pre-Fusion Training ROC', mode='multi')
 
-''' ================= Joint Training ================= '''
-mode = 'joint'
-joint_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\MNISTandSVHN\\Joint_train_Full_Net.pth"
-joint_train_full_net = initialize_network(mode, load_weights = False, train_pre= True)
-joint_training_loss, joint_training_acc = train_full_net(mode, joint_train_full_net, lr, joint_train_path)
+# ''' ================= Joint Training ================= '''
+# mode = 'joint'
+# joint_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\MNISTandSVHN\\Joint_train_Full_Net.pth"
+# joint_train_full_net = initialize_network(mode, load_weights = False, train_pre= True)
+# joint_training_loss, joint_training_acc = train_full_net(mode, joint_train_full_net, lr, joint_train_path)
 
-joint_train_lo, joint_train_acc, joint_train_pred, joint_train_true = test_full_net(mode, joint_train_full_net)
+# joint_train_lo, joint_train_acc, joint_train_pred, joint_train_true = test_full_net(mode, joint_train_full_net)
 
-cm = confusion_matrix(joint_train_true, joint_train_pred)
-names = ('0','1','2','3','4','5','6','7','8','9')
-plt.figure(figsize=(10,10))
-plot_confusion_matrix(cm, names, t='Joint Training Confusion Matrix')
+# cm = confusion_matrix(joint_train_true, joint_train_pred)
+# names = ('0','1','2','3','4','5','6','7','8','9')
+# plt.figure(figsize=(10,10))
+# plot_confusion_matrix(cm, names, t='Joint Training Confusion Matrix')
 
-f1 = f1_score(joint_train_true, joint_train_pred, average='micro')
-acc = accuracy_score(joint_train_true, joint_train_pred)
+# f1 = f1_score(joint_train_true, joint_train_pred, average='micro')
+# acc = accuracy_score(joint_train_true, joint_train_pred)
 
-file1 = open(file, "a")
-write_string = "Joint Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
-file1.write(write_string)
-file1.close()
+# file1 = open(file, "a")
+# write_string = "Joint Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+# file1.write(write_string)
+# file1.close()
 
-plot_roc(joint_train_full_net, device, test_loader, num_classes=10, t='Joint Training ROC', mode='multi')
+# plot_roc(joint_train_full_net, device, test_loader, num_classes=10, t='Joint Training ROC', mode='multi')
 
 ''' ================= Plotting ================= '''
-plot_acc_vs_epoch(mnist_acc, svhn_acc, with_pre_training_acc, wo_pre_training_acc, joint_training_acc)
+#plot_acc_vs_epoch(mnist_acc, svhn_acc, with_pre_training_acc, wo_pre_training_acc, joint_training_acc)
+plot_acc_vs_epoch_single(mnist_acc, name='mnist')
 
-svhn_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\svhn_train_acc.data"
-mnist_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\mnist_train_acc.data"
-pre_train_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\pre_train_acc.data"
-wo_pre_train_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\wo_pre_train_acc.data"
-joint_train_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\joint_train_acc.data"
+# svhn_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\svhn_train_acc.data"
+# mnist_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\mnist_train_acc.data"
+# pre_train_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\pre_train_acc.data"
+# wo_pre_train_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\wo_pre_train_acc.data"
+# joint_train_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\joint_train_acc.data"
 
-with open(svhn_acc_file, 'wb') as filehandle:
-    pickle.dump(svhn_acc, filehandle)
+# with open(svhn_acc_file, 'wb') as filehandle:
+#     pickle.dump(svhn_acc, filehandle)
 
-with open(mnist_acc_file, 'wb') as filehandle:
-    pickle.dump(mnist_acc, filehandle)
+# with open(mnist_acc_file, 'wb') as filehandle:
+#     pickle.dump(mnist_acc, filehandle)
     
-with open(pre_train_acc_file, 'wb') as filehandle:
-    pickle.dump(with_pre_training_acc, filehandle)
+# with open(pre_train_acc_file, 'wb') as filehandle:
+#     pickle.dump(with_pre_training_acc, filehandle)
     
-with open(wo_pre_train_acc_file, 'wb') as filehandle:
-    pickle.dump(wo_pre_training_acc, filehandle)
+# with open(wo_pre_train_acc_file, 'wb') as filehandle:
+#     pickle.dump(wo_pre_training_acc, filehandle)
     
-with open(joint_train_acc_file, 'wb') as filehandle:
-    pickle.dump(joint_training_acc, filehandle)   
+# with open(joint_train_acc_file, 'wb') as filehandle:
+#     pickle.dump(joint_training_acc, filehandle)   
