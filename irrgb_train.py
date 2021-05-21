@@ -7,6 +7,7 @@ Created on Tue Feb  9 11:20:49 2021
 
 import numpy as np
 import torch
+import sys
 import torch.optim as optim 
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
@@ -19,6 +20,10 @@ from PIL import Image
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from helper_functions import plot_acc_vs_epoch, plot_confusion_matrix, plot_roc, train_val_test_split
 import pickle
+from torchsummary import summary
+
+sys.setrecursionlimit(10**6)
+
 ''' ================= Methods ================= '''
 def initialize_network(mode, load_weights, train_pre, fusion):
     torch.cuda.empty_cache()
@@ -27,7 +32,7 @@ def initialize_network(mode, load_weights, train_pre, fusion):
     
     ##### IR Pre Fusion #####
     ir_net = Generic_CNN()
-    ir_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\GrayandRGB\\Gray3.pth'
+    ir_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\GrayandRGB\\Gray4.pth'
     if load_weights == True:
         ir_pre_net = CNN()
         ir_pre_net_dict = ir_pre_net.state_dict()
@@ -56,7 +61,7 @@ def initialize_network(mode, load_weights, train_pre, fusion):
     post_fusion_net = EXP2_Post_Fusion_Layer()
     if load_weights == True:
         post_fusion_dict = post_fusion_net.state_dict()
-        pretrained_dict_3 = {k: v for k, v in rgb_pre_net_dict.items() if k in post_fusion_dict}
+        pretrained_dict_3 = {k: v for k, v in ir_pre_net_dict.items() if k in post_fusion_dict}
         post_fusion_dict.update(pretrained_dict_3) 
         post_fusion_net.load_state_dict(pretrained_dict_3)
     print("*** Post Fusion Loaded")
@@ -102,7 +107,7 @@ def train_full_net(mode, model, lr, save_path, fusion_type):
     optimizer = optim.SGD(model.parameters(), lr= lr)
     train_loss = []
     train_acc = []
-    
+
     for epoch in range(epochs):
         training_loss = 0.0
         cor = []
@@ -124,7 +129,8 @@ def train_full_net(mode, model, lr, save_path, fusion_type):
             cor.append(batch_cor)
             loss.backward()
             optimizer.step()
-            Algorithm_One(model, fusion_type)
+            if fusion_type == 'SD':
+                Algorithm_One(model)
             losses.append(loss.item())
             training_loss += loss.item()
             if batch % 10 == 0:
@@ -142,10 +148,11 @@ def train_full_net(mode, model, lr, save_path, fusion_type):
 
 ''' ================= Set Variables ================= '''
 
+torch.manual_seed(0)
 batch_size = 64
 epochs = 50
-lr = 0.001
-file = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\gray_and_rgb\\gray_rgb_acc.txt'
+lr = 0.0005 #normally .001
+file = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\gray_and_rgb\\gray_rgb_acc2.txt'
 open(file, 'w').close()
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -207,56 +214,78 @@ test_loader = torch.utils.data.DataLoader(test_set, batch_size, shuffle=False)
 
 ''' ================= Independent Training ================= '''
 
-ir_acc = [37.55720609197989, 51.279165728861884, 57.29612123940281, 61.27241353439868, 64.20586690674469, 
-          66.44159351789331, 68.54977867807037, 69.81018831120114, 70.53792482556831, 70.80801260409633, 
-          72.22597344136844, 72.78115387500938, 73.61392452547078, 73.67394403181034, 74.61925125665842, 
-          75.28696826468602, 75.7821291919874, 76.25478280441143, 76.95250956560882, 77.07254857828795, 
-          77.2976217270613, 78.13789481581514, 78.55052892189961, 78.61054842823918, 79.248255683097, 
-          79.40580688723836, 80.11103608672819, 79.85595318478505, 80.1635531547753, 80.98131892865182, 
-          81.05634331157626, 81.23640183059494, 81.69405056643409, 82.1441968639808, 82.35426513616926, 
-          82.5118163403106, 83.08200165053643, 83.23205041638532, 83.13451871858354, 83.6296796458849, 
-          84.31990396878986, 84.15485032635607, 84.68752344511967, 84.4924600495161, 84.36491859854452, 
-          85.40025508290195, 85.46777702753396, 85.50528921899617, 85.93292820166555, 85.72285992947708]
+ir_acc = [39.63538149898717, 52.224472953709956, 56.83847250356366, 60.882286743191536, 63.35058894140596, 65.90141796083728, 67.97209092955211, 69.16497861805087, 70.44039312776653, 71.29567109310526, 72.02340760747244, 73.07374896841473, 73.68894890839523, 74.04156350814014, 74.58173906519619, 75.35449020931803, 75.59456823467627, 76.02970965563809, 76.58489008927901, 77.20009002925951, 77.17758271438217, 77.62022657363643, 78.01785580313602, 78.39297771775827, 78.85812889188986, 78.80561182384275, 79.45832395528546, 79.77342636356816, 80.1635531547753, 80.22357266111486, 80.88378723085003, 80.79375797134068, 80.85377747768024, 81.85910420886788, 81.93412859179233, 81.76907494935854, 82.1967139320279, 82.39927976592392, 83.03698702078175, 82.99197239102709, 83.23955285467777, 83.61467476930002, 83.63718208417735, 83.89976742441293, 84.07232350513917, 84.58248930902543, 84.90509415560057, 85.3102258233926, 85.5428014104584, 85.2427038787606]
 
-rgb_acc = [47.49043439117713, 59.47933078250431, 64.30339860454647, 66.88423737714757, 69.11246155000376,
-           71.01057843799235, 73.00622702378273, 73.32132943206543, 74.74679270762998, 75.15942681371446,
-           76.449846200015, 77.25260709730662, 76.96001200390127, 77.35764123340086, 78.6480606197014,
-           78.6480606197014, 79.28576787455923, 79.6308800360117, 79.95348488258684, 80.71873358841624,
-           80.61369945232201, 81.0638457498687, 81.52149448570786, 82.10668467251857, 81.88911396203767,
-           82.32425538299948, 82.45179683397104, 82.76689924225373, 83.27706504614, 83.45712356515868,
-           83.53214794808312, 83.6296796458849, 83.75722109685648, 83.9447820541676, 84.38742591342186,
-           84.53747467927076, 85.07014779803436, 85.42276239777928, 84.80756245779878, 85.6778452997224,
-           85.64033310826018, 85.88791357191087, 86.30805011628779, 86.46560132042914, 86.48060619701403,
-           86.33805986945757, 87.14082076674919, 87.38089879210743, 87.38089879210743, 87.26085977942832]
+rgb_acc = [41.75857153574912, 54.71528246680171, 59.4268137144572, 63.32808162652862, 66.65916422837422, 68.98492009903218, 70.97306624653012, 72.64610998574537, 73.57641233400855, 74.28914397179084, 75.15192437542201, 75.78963163027984, 76.65241203391102, 76.97501688048615, 77.63523145022133, 78.1153875009378, 78.14539725410758, 78.52051916872983, 79.35328981919123, 79.88596293795483, 79.90096781453973, 80.27608972916198, 80.53867506939756, 81.03383599669893, 81.57401155375497, 81.66404081326431, 82.25673343836748, 82.65436266786706, 82.39177732763147, 82.95446019956486, 83.40460649711156, 83.30707479930977, 83.74971865856403, 83.86975767124315, 84.4924600495161, 84.52246980268588, 84.68002100682722, 85.27271363193037, 85.27271363193037, 85.58031360192062, 85.77537699752419, 86.00795258458999, 86.09047940580689, 86.60064520969316, 86.72068422237227, 86.87823542651361, 87.10330857528697, 86.99827443919274, 87.77852802160702, 87.62847925575812]
 
+''' ================= With Compact Bilinear Fusion Training ================= '''
+mode = 'Compact Bilinear Fusion'
+cbf_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\compact_bilinear_train_Full_Net.pth"
+cbf_full_net = initialize_network(mode, load_weights = True, fusion='C-BF', train_pre= False)
+net_details_1 = open("C:\\Users\\ancarey\\Documents\\FusionPaper\\cbf_params.txt", 'a')
+for name, param in cbf_full_net.named_parameters():
+    s = name + ' '+ str(param.shape) + '\n'
+    net_details_1.write(s)
+net_details_1.close()
 
-''' ================= Joint FC Training ================= '''
-mode = 'joint'
-joint_fc_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\joint_fc_train_Full_Net_FC.pth"
-joint_fc_train_full_net = initialize_network(mode, load_weights = False, fusion = 'FC', train_pre= True)
-joint_fc_training_loss, joint_fc_training_acc = train_full_net(mode, joint_fc_train_full_net, lr, joint_fc_train_path, fusion_type = 'FC')
+cbf_training_loss, cbf_training_acc = train_full_net(mode, cbf_full_net, lr, cbf_path, fusion_type = 'C-BF')
 
-joint_fc_train_lo, joint_fc_train_acc, joint_fc_train_pred, joint_fc_train_true = test_full_net(mode, joint_fc_train_full_net)
+cbf_lo, cbf_acc, cbf_pred, cbf_true = test_full_net(mode, cbf_full_net)
 
-cm = confusion_matrix(joint_fc_train_true, joint_fc_train_pred)
+cm = confusion_matrix(cbf_true, cbf_pred)
 names = ('building','forest' , 'glacier', 'mountain', 'sea', 'street')
 plt.figure(figsize=(10,10))
-plot_confusion_matrix(cm, names, t='Joint Training Fully-Connected Fusion Confusion Matrix')
+plot_confusion_matrix(cm, names, t='Compact Bilinear Fusion Confusion Matrix')
 
-f1 = f1_score(joint_fc_train_true, joint_fc_train_pred, average='micro')
-acc = accuracy_score(joint_fc_train_true, joint_fc_train_pred)
+f1 = f1_score(cbf_true, cbf_pred, average='micro')
+acc = accuracy_score(cbf_true, cbf_pred)
 
 file1 = open(file, "a")
-write_string = "Joint Training Fully-Connected Fusion Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+write_string = "Compact Bilinear Fusion Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
 file1.write(write_string)
 file1.close()
 
-plot_roc(joint_fc_train_full_net, device, test_loader, num_classes=6, t='Joint Training Fully-Connected Fusion ROC', mode='multi')
+plot_roc(cbf_full_net, device, test_loader, num_classes=6, t='Compact Bilinear Fusion Training ROC', mode='multi')
+
+
+''' ================= With FC-Bilinear Fusion Training ================= '''
+mode = 'Fully Connected Bilinear Fusion'
+fcbf_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\fc_bilinear_train_Full_Net.pth"
+fcbf_full_net = initialize_network(mode, load_weights = True, fusion='FC-BF', train_pre= False)
+net_details_1 = open("C:\\Users\\ancarey\\Documents\\FusionPaper\\fcbf_params.txt", 'a')
+for name, param in cbf_full_net.named_parameters():
+    s = name + ' '+ str(param.shape) + '\n'
+    net_details_1.write(s)
+net_details_1.close()
+
+fcbf_training_loss, fcbf_training_acc = train_full_net(mode, fcbf_full_net, lr, fcbf_path, fusion_type = 'FC-BF')
+
+fcbf_lo, fcbf_acc, fcbf_pred, fcbf_true = test_full_net(mode, fcbf_full_net)
+
+cm = confusion_matrix(fcbf_true, fcbf_pred)
+names = ('building','forest' , 'glacier', 'mountain', 'sea', 'street')
+plt.figure(figsize=(10,10))
+plot_confusion_matrix(cm, names, t='Fully Conntexted Bilinear Fusion Confusion Matrix')
+
+f1 = f1_score(fcbf_true, fcbf_pred, average='micro')
+acc = accuracy_score(fcbf_true, fcbf_pred)
+
+file1 = open(file, "a")
+write_string = "Fully Connected Bilinear Fusion Training Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+file1.write(write_string)
+file1.close()
+
+plot_roc(fcbf_full_net, device, test_loader, num_classes=6, t='Fully Connected Bilinear Fusion Training ROC', mode='multi')
 
 ''' ================= With Pre-Fusion Training ================= '''
 mode = 'w/ pre-training'
 pre_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\Pre_fusion_train_Full_Net.pth"
 pre_train_full_net = initialize_network(mode, load_weights = True, fusion='SD', train_pre= True)
+net_details_1 = open("C:\\Users\\ancarey\\Documents\\FusionPaper\\wpt_params.txt", 'a')
+for name, param in cbf_full_net.named_parameters():
+    s = name + ' '+ str(param.shape) + '\n'
+    net_details_1.write(s)
+net_details_1.close()
 with_pre_training_loss, with_pre_training_acc = train_full_net(mode, pre_train_full_net, lr, pre_train_path, fusion_type = 'SD')
 
 pre_train_lo, pre_train_acc, pre_train_pred, pre_train_true = test_full_net(mode, pre_train_full_net)
@@ -280,6 +309,11 @@ plot_roc(pre_train_full_net, device, test_loader, num_classes=6, t='With Pre-Fus
 mode = 'w/o pre-training'
 wo_pre_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\Without_Pre_fusion_train_Full_Net.pth"
 wo_pre_train_full_net = initialize_network(mode, load_weights = True, fusion= 'SD', train_pre= False)
+net_details_1 = open("C:\\Users\\ancarey\\Documents\\FusionPaper\\wopt_params.txt", 'a')
+for name, param in cbf_full_net.named_parameters():
+    s = name + ' '+ str(param.shape) + '\n'
+    net_details_1.write(s)
+net_details_1.close()
 wo_pre_training_loss, wo_pre_training_acc = train_full_net(mode, wo_pre_train_full_net, lr, wo_pre_train_path, fusion_type = 'SD')
 
 wo_pre_train_lo, wo_pre_train_acc, wo_pre_train_pred, wo_pre_train_true = test_full_net(mode, wo_pre_train_full_net)
@@ -301,8 +335,14 @@ plot_roc(wo_pre_train_full_net, device, test_loader, num_classes=6, t='Without P
 
 ''' ================= Joint Same Dim Training ================= '''
 mode = 'joint'
+lr=.001
 joint_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\Joint_train_Full_Net_same_dim.pth"
 joint_train_full_net = initialize_network(mode, load_weights = False, fusion = 'SD', train_pre= True)
+net_details_1 = open("C:\\Users\\ancarey\\Documents\\FusionPaper\\jsd_params.txt", 'a')
+for name, param in cbf_full_net.named_parameters():
+    s = name + ' '+ str(param.shape) + '\n'
+    net_details_1.write(s)
+net_details_1.close()
 joint_training_loss, joint_training_acc = train_full_net(mode, joint_train_full_net, lr, joint_train_path, fusion_type = 'SD')
 
 joint_train_lo, joint_train_acc, joint_train_pred, joint_train_true = test_full_net(mode, joint_train_full_net)
@@ -322,10 +362,38 @@ file1.close()
 
 plot_roc(joint_train_full_net, device, test_loader, num_classes=6, t='Joint Training Same Dimension Fusion ROC', mode='multi')
 
+''' ================= Joint FC Training ================= '''
+mode = 'joint'
+joint_fc_train_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\IRandRGB\\joint_fc_train_Full_Net_FC.pth"
+joint_fc_train_full_net = initialize_network(mode, load_weights = False, fusion = 'FC', train_pre= True)
+joint_fc_training_loss, joint_fc_training_acc = train_full_net(mode, joint_fc_train_full_net, lr, joint_fc_train_path, fusion_type = 'FC')
+net_details_1 = open("C:\\Users\\ancarey\\Documents\\FusionPaper\\jfc_params.txt", 'a')
+for name, param in cbf_full_net.named_parameters():
+    s = name + ' '+ str(param.shape) + '\n'
+    net_details_1.write(s)
+net_details_1.close()
+joint_fc_train_lo, joint_fc_train_acc, joint_fc_train_pred, joint_fc_train_true = test_full_net(mode, joint_fc_train_full_net)
+
+cm = confusion_matrix(joint_fc_train_true, joint_fc_train_pred)
+names = ('building','forest' , 'glacier', 'mountain', 'sea', 'street')
+plt.figure(figsize=(10,10))
+plot_confusion_matrix(cm, names, t='Joint Training Fully-Connected Fusion Confusion Matrix')
+
+f1 = f1_score(joint_fc_train_true, joint_fc_train_pred, average='micro')
+acc = accuracy_score(joint_fc_train_true, joint_fc_train_pred)
+
+file1 = open(file, "a")
+write_string = "Joint Training Fully-Connected Fusion Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+file1.write(write_string)
+file1.close()
+
+plot_roc(joint_fc_train_full_net, device, test_loader, num_classes=6, t='Joint Training Fully-Connected Fusion ROC', mode='multi')
 
 
 ''' ================= Plotting ================= '''
-plot_acc_vs_epoch(ir_acc, rgb_acc, with_pre_training_acc, wo_pre_training_acc, joint_training_acc, joint_fc_train_acc)
+#with_pre_training_acc = [87.87943565626335, 87.87943565626335, 88.65612084936582, 88.82713410289297, 88.88413852073536, 89.0622773264928, 89.0836539831837, 89.32592275901382, 89.64657260937723, 89.3900527290865, 89.44705714692888, 89.43280604246829, 89.70357702721961, 90.095482399886, 90.35200228017672, 90.32350007125552, 90.18098902664957, 90.0669801909648, 90.41613225024939, 90.53726663816445, 90.30212341456463, 90.4090066980191, 91.25694741342454, 91.27119851788514, 90.83653983183697, 91.10018526435799, 91.49209063702438, 91.15006412997008, 91.49209063702438, 91.67735499501211, 91.59184836824853, 91.63460168163033, 91.79848938292717, 91.92674932307254, 92.20464586005416, 91.93387487530283, 91.86974490523015, 92.21177141228445, 92.44691463588428, 92.45404018811458, 92.19039475559356, 92.49679350149637, 92.66068120279321, 92.83882000855067, 92.99558215761722, 92.66780675502352, 92.79606669516888, 93.16659541114436, 93.0525865754596, 93.30198090352002]
+#wo_pre_training_acc = [85.87715547954967, 86.26906085221604, 86.57545959811885, 86.51845518027648, 86.52558073250677, 86.63246401596123, 87.18113153769417, 87.12412711985179, 86.88898389625196, 87.0671227020094, 86.87473279179136, 87.00299273193673, 87.08137380647, 87.02436938862762, 86.98161607524582, 87.30226592560923, 86.92461165740345, 87.00299273193673, 87.28088926891834, 87.36639589568192, 87.4020236568334, 87.14550377654268, 87.21675929884566, 87.47327917913638, 87.34501923899103, 87.51603249251816, 87.23101040330626, 87.55166025366965, 87.22388485107597, 87.32364258230012, 87.60153911928174, 87.4091492090637, 87.63004132820294, 87.58728801482116, 87.38777255237281, 87.55878580589996, 87.56591135813025, 87.64429243266353, 87.68704574604531, 87.51603249251816, 87.25238705999715, 87.54453470143936, 87.38064700014252, 87.75830126834829, 87.85805899957246, 87.56591135813025, 87.61579022374234, 87.78680347726949, 87.82243123842098, 87.81530568619068]
+plot_acc_vs_epoch(ir_acc, rgb_acc, with_pre_training_acc, wo_pre_training_acc, joint_training_acc, joint_fc_training_acc, cbf_training_acc, fcbf_training_acc)
 
 # ir_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\ir_train_acc.data"
 # rgb_acc_file = "C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\rgb_train_acc.data"

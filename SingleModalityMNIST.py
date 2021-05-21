@@ -10,13 +10,18 @@ Created on Wed Feb  3 11:42:23 2021
 
 from __future__ import print_function
 import torch
+from sklearn.metrics import roc_curve, auc
+import itertools
+from itertools import cycle
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 from torchvision import transforms, datasets
 import matplotlib.pyplot as plt
 from torch import optim 
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from helper_functions import plot_confusion_matrix, plot_roc, train, test
+
 
 class M_Network(nn.Module):
     def __init__(self):

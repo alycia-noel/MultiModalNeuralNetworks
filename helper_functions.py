@@ -120,7 +120,7 @@ def plot_roc(model, device, test_loader, num_classes, t, mode):
     mean_tpr /= n_classes
     
     plt.figure()
-    
+    plt.figure(figsize=(10,10))
     colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
     for i, color in zip(range(n_classes), colors):
         plt.plot(fpr[i], tpr[i], color=color, lw=lw,
@@ -130,6 +130,7 @@ def plot_roc(model, device, test_loader, num_classes, t, mode):
     plt.plot([0, 1], [0, 1], 'k--', lw=lw)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
+   
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title(t)
@@ -162,13 +163,15 @@ def test_class_probabilities(model, device, test_loader, which_class):
             probabilities.extend(np.exp(output[:, which_class].cpu().detach().numpy()))
     return [i.item() for i in actuals], [i.item() for i in probabilities]
 
-def plot_acc_vs_epoch(acc_1, acc_2, acc_3, acc_4, acc_5, acc_6,):
-    plt.plot(acc_1, label='IR')
+def plot_acc_vs_epoch(acc_1, acc_2, acc_3, acc_4, acc_5, acc_6, acc_7, acc_8):
+    plt.plot(acc_1, label='Gray')
     plt.plot(acc_2, label='RGB')
     plt.plot(acc_3, label='Pre-Train')
     plt.plot(acc_4, label='W/O Pre-train')
     plt.plot(acc_5, label='Joint - SD')
     plt.plot(acc_6, label='Joint - FC')
+    plt.plot(acc_7, label="Compact Bilinear")
+    plt.plot(acc_8, label="FC Bilinear")
     plt.legend(loc = 4)
     plt.title("Training Accuracy over Epochs")
     plt.xlabel("Epoch")

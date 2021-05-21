@@ -191,8 +191,9 @@ class CNN(nn.Module):
         
         return output
 # ''' ================= Create Datasets ================='''
+# torch.manual_seed(0)
 
-# #Paths
+# # #Paths
 # building_rgb_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\rgb\\train\\buildings\\'
 # forest_rgb_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\rgb\\train\\forest\\'
 # glacier_rgb_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\rgb\\train\\glacier\\'
@@ -209,48 +210,48 @@ class CNN(nn.Module):
 # sea_rgb_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\rgb\\test\\sea\\'
 # street_rgb_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\rgb\\test\\street\\'
 
-building_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\buildings\\'
-forest_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\forest\\'
-glacier_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\glacier\\'
-mountain_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\mountain\\'
-sea_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\sea\\'
-street_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\street\\'
+# building_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\buildings\\'
+# forest_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\forest\\'
+# glacier_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\glacier\\'
+# mountain_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\mountain\\'
+# sea_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\sea\\'
+# street_grayscale_train_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\train\\street\\'
 
-building_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\buildings\\'
-forest_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\forest\\'
-glacier_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\glacier\\'
-mountain_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\mountain\\'
-sea_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\sea\\'
-street_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\street\\'
+# building_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\buildings\\'
+# forest_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\forest\\'
+# glacier_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\glacier\\'
+# mountain_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\mountain\\'
+# sea_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\sea\\'
+# street_grayscale_test_path = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\data\\GrayandRGB\\grayscale\\test\\street\\'
 
-transform = transforms.Compose([
-    transforms.Resize((150, 150)),
-    transforms.ToTensor(),
-    #transforms.Normalize((0.5,), (0.5,))#transforms.Normalize((0.1307,), (0.3981,))
-    ])
+# transform = transforms.Compose([
+#     transforms.Resize((150, 150)),
+#     transforms.ToTensor(),
+#     #transforms.Normalize((0.5,), (0.5,))#transforms.Normalize((0.1307,), (0.3981,))
+#     ])
 
-#Split into train and test
-batch_size = 64
-epochs = 50
-lr = 0.001
+# #Split into train and test
+# batch_size = 64
+# epochs = 50
+# lr = 0.001
 
-#best
-#epochs = 50
-#lr = 0.001 gray2
+# #best
+# #epochs = 50
+# #lr = 0.001 gray2
 
-building_train = image_Dataset(building_grayscale_train_path, 0, transform)
-forest_train = image_Dataset(forest_grayscale_train_path, 1, transform)
-glacier_train = image_Dataset(glacier_grayscale_train_path, 2, transform)
-mountain_train = image_Dataset(mountain_grayscale_train_path, 3, transform)
-sea_train = image_Dataset(sea_grayscale_train_path, 4, transform)
-street_train = image_Dataset(street_grayscale_train_path, 5, transform)
+# # building_train = image_Dataset(building_grayscale_train_path, 0, transform)
+# # forest_train = image_Dataset(forest_grayscale_train_path, 1, transform)
+# # glacier_train = image_Dataset(glacier_grayscale_train_path, 2, transform)
+# # mountain_train = image_Dataset(mountain_grayscale_train_path, 3, transform)
+# # sea_train = image_Dataset(sea_grayscale_train_path, 4, transform)
+# # street_train = image_Dataset(street_grayscale_train_path, 5, transform)
 
-building_test = image_Dataset(building_grayscale_test_path, 0, transform)
-forest_test = image_Dataset(forest_grayscale_test_path, 1, transform)
-glacier_test = image_Dataset(glacier_grayscale_test_path, 2, transform)
-mountain_test = image_Dataset(mountain_grayscale_test_path, 3, transform)
-sea_test = image_Dataset(sea_grayscale_test_path, 4, transform)
-street_test = image_Dataset(street_grayscale_test_path, 5, transform)
+# # building_test = image_Dataset(building_grayscale_test_path, 0, transform)
+# # forest_test = image_Dataset(forest_grayscale_test_path, 1, transform)
+# # glacier_test = image_Dataset(glacier_grayscale_test_path, 2, transform)
+# # mountain_test = image_Dataset(mountain_grayscale_test_path, 3, transform)
+# # sea_test = image_Dataset(sea_grayscale_test_path, 4, transform)
+# # street_test = image_Dataset(street_grayscale_test_path, 5, transform)
 
 # building_train = image_Dataset(building_rgb_train_path, 0, transform)
 # forest_train = image_Dataset(forest_rgb_train_path, 1, transform)
@@ -267,97 +268,97 @@ street_test = image_Dataset(street_grayscale_test_path, 5, transform)
 # street_test = image_Dataset(street_rgb_test_path, 5, transform)
 
 
-train_split = .95
-val_split = .05
+# train_split = .95
+# val_split = .05
 
-building_split = train_val_test_split(building_train, splits=[train_split, val_split])
-building_train = building_split['train']
-building_val = building_split['val']
+# building_split = train_val_test_split(building_train, splits=[train_split, val_split])
+# building_train = building_split['train']
+# building_val = building_split['val']
 
-forest_split = train_val_test_split(forest_train, splits=[train_split, val_split])
-forest_train = forest_split['train']
-forest_val = forest_split['val']
+# forest_split = train_val_test_split(forest_train, splits=[train_split, val_split])
+# forest_train = forest_split['train']
+# forest_val = forest_split['val']
 
-glacier_split = train_val_test_split(glacier_train, splits=[train_split, val_split])
-glacier_train = glacier_split['train']
-glacier_val = glacier_split['val']
+# glacier_split = train_val_test_split(glacier_train, splits=[train_split, val_split])
+# glacier_train = glacier_split['train']
+# glacier_val = glacier_split['val']
 
-mountain_split = train_val_test_split(mountain_train, splits=[train_split, val_split])
-mountain_train = mountain_split['train']
-mountain_val = mountain_split['val']
+# mountain_split = train_val_test_split(mountain_train, splits=[train_split, val_split])
+# mountain_train = mountain_split['train']
+# mountain_val = mountain_split['val']
 
-sea_split = train_val_test_split(sea_train, splits=[train_split, val_split])
-sea_train = sea_split['train']
-sea_val = sea_split['val']
+# sea_split = train_val_test_split(sea_train, splits=[train_split, val_split])
+# sea_train = sea_split['train']
+# sea_val = sea_split['val']
 
-street_split = train_val_test_split(street_train, splits=[train_split, val_split])
-street_train = street_split['train']
-street_val = street_split['val']
+# street_split = train_val_test_split(street_train, splits=[train_split, val_split])
+# street_train = street_split['train']
+# street_val = street_split['val']
 
-train_set = building_train + forest_train + glacier_train +  mountain_train + sea_train + street_train 
-test_set = building_test + forest_test + glacier_test +  mountain_test + sea_test + street_test 
-val_set = building_val + forest_val + glacier_val + mountain_val + sea_val + street_val
+# train_set = building_train + forest_train + glacier_train +  mountain_train + sea_train + street_train 
+# test_set = building_test + forest_test + glacier_test +  mountain_test + sea_test + street_test 
+# val_set = building_val + forest_val + glacier_val + mountain_val + sea_val + street_val
 
-train_loader = torch.utils.data.DataLoader(train_set, batch_size, shuffle = True)
-test_loader = torch.utils.data.DataLoader(test_set, batch_size, shuffle=False)
-val_loader = torch.utils.data.DataLoader(val_set, batch_size, shuffle = True)
+# train_loader = torch.utils.data.DataLoader(train_set, batch_size, shuffle = True)
+# test_loader = torch.utils.data.DataLoader(test_set, batch_size, shuffle=False)
+# val_loader = torch.utils.data.DataLoader(val_set, batch_size, shuffle = True)
 
-model = CNN()
-model.apply(weight_init)
-model.to('cuda')
+# model = CNN()
+# #model.apply(weight_init)
+# model.to('cuda')
 
-log_interval = 1
-device = 'cuda'
+# log_interval = 1
+# device = 'cuda'
 
-optimizer = optim.SGD(model.parameters(), lr = lr)
+# optimizer = optim.SGD(model.parameters(), lr = lr)
 
-accuracy = []
-loss = []
-acc = 0
-val_loss = []
-val_acc = []
-#train the model
-for epoch in range(1, epochs + 1):
-    a, l = train(log_interval, model, device, train_loader, optimizer, epoch)
-    accuracy.append(a)
-    loss.append(l)
-    _, true, pred, lo = test(model, device, val_loader)
-    acc_val = accuracy_score(true, pred) * 100.
-    print(acc_val)
-    val_loss.append(lo)
-    val_acc.append(acc_val)
+# accuracy = []
+# loss = []
+# acc = 0
+# val_loss = []
+# val_acc = []
+# #train the model
+# for epoch in range(1, epochs + 1):
+#     a, l = train(log_interval, model, device, train_loader, optimizer, epoch)
+#     accuracy.append(a)
+#     loss.append(l)
+#     _, true, pred, lo = test(model, device, val_loader)
+#     acc_val = accuracy_score(true, pred) * 100.
+#     print(acc_val)
+#     val_loss.append(lo)
+#     val_acc.append(acc_val)
 
-#save_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\GrayandRGB\RGB.pth"
-save_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\GrayandRGB\Gray4.pth" #gray2 best
-torch.save(model.state_dict(), save_path) 
+# save_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\GrayandRGB\RGB.pth"
+# #save_path = "C:\\Users\\ancarey\\Documents\\FusionPaper\\models\\GrayandRGB\Gray4.pth" #gray2 best
+# torch.save(model.state_dict(), save_path) 
 
-print(accuracy)
+# print(accuracy)
 
-plt.plot(accuracy)
-plt.plot(loss)
-plt.plot(val_loss)
-plt.plot(val_acc)
-plt.title("Gray Training Accuracy over Epochs")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy %")
+# plt.plot(accuracy)
+# plt.plot(loss)
+# plt.plot(val_loss)
+# plt.plot(val_acc)
+# plt.title("RGB Training Accuracy over Epochs")
+# plt.xlabel("Epoch")
+# plt.ylabel("Accuracy %")
 
-#Generate Confusion Matrix for test 
-_, true, pred, _ = test(model, device, test_loader)
+# #Generate Confusion Matrix for test 
+# _, true, pred, _ = test(model, device, test_loader)
 
 
-cm = confusion_matrix(true, pred)
-names = ('building','forest','glacier','mountain','sea','street')
-plt.figure(figsize=(10,10))
-plot_confusion_matrix(cm, names, t='Gray Confusion Matrix')
+# cm = confusion_matrix(true, pred)
+# names = ('building','forest','glacier','mountain','sea','street')
+# plt.figure(figsize=(10,10))
+# plot_confusion_matrix(cm, names, t='RGB Confusion Matrix')
 
-f1 = f1_score(true, pred, average='micro')
-acc = accuracy_score(true, pred)
-print('Gray Test accuracy:', acc)
+# f1 = f1_score(true, pred, average='micro')
+# acc = accuracy_score(true, pred)
+# print('RGB Test accuracy:', acc)
 
-file = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\gray_and_rgb\\ind_acc.txt'
-file1 = open(file, "a")
-write_string = "Gray Testing Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
-file1.write(write_string)
-file1.close()
+# file = 'C:\\Users\\ancarey\\Documents\\FusionPaper\\results\\gray_and_rgb\\ind_acc.txt'
+# file1 = open(file, "a")
+# write_string = "RGB Testing Accuracy: " + str(acc)+ "\t F1: "+ str(f1) + "\n"
+# file1.write(write_string)
+# file1.close()
 
-plot_roc(model, device, test_loader, num_classes=6, t='Gray ROC', mode='single')
+# plot_roc(model, device, test_loader, num_classes=6, t='Gray ROC', mode='single')

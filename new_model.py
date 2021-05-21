@@ -10,7 +10,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from PIL import Image
-#import numpy as np
+import numpy as np
+from torch.autograd import Variable
+import torch.fft as afft
 
 class create_multiview_data(Dataset):
     def __init__(self, root_one, root_two, data_class, transform):
@@ -201,8 +203,8 @@ class Generic_CNN(nn.Module):
 class Same_Dim_Fusion_Layer(nn.Module):
     def __init__(self):
         super(Same_Dim_Fusion_Layer, self).__init__()
-        self.feature_weight_one = nn.Parameter(torch.randn(192, 6, 6).uniform_(0,1).view(-1, 192*6*6), requires_grad=True)
-        self.feature_weight_two = nn.Parameter(torch.randn(192, 6, 6).uniform_(0,1).view(-1, 192*6*6), requires_grad=True)
+        self.feature_weight_one = nn.Parameter(torch.ones(192, 6, 6).view(-1, 192*6*6), requires_grad=True)
+        self.feature_weight_two = nn.Parameter(torch.zeros(192, 6, 6).view(-1, 192*6*6), requires_grad=True)
 
     def forward(self, class_one, class_two):
         x = (self.feature_weight_one * class_one.view(-1, 192*6*6)) + (self.feature_weight_two * class_two.view(-1, 192*6*6))
@@ -212,12 +214,12 @@ class Same_Dim_Fusion_Layer(nn.Module):
 class EXP2_Same_Dim_Fusion_Layer(nn.Module):
     def __init__(self):
         super(EXP2_Same_Dim_Fusion_Layer, self).__init__()
-        self.feature_weight_one = nn.Parameter(torch.randn(256, 1, 1).uniform_(0,1).view(-1, 256*1*1), requires_grad=True)
-        self.feature_weight_two = nn.Parameter(torch.randn(256, 1, 1).uniform_(0,1).view(-1, 256*1*1), requires_grad=True)
+        self.feature_weight_one = nn.Parameter(torch.ones(256, 1, 1), requires_grad=True)
+        self.feature_weight_two = nn.Parameter(torch.zeros(256, 1, 1).uniform_(0,1), requires_grad=True)
 
     def forward(self, class_one, class_two):
-        x = (self.feature_weight_one * class_one.view(-1, 256*1*1)) + (self.feature_weight_two * class_two.view(-1, 256*1*1))
-        
+        x = (self.feature_weight_one * class_one) + (self.feature_weight_two * class_two)
+        #print(x)
         return x
     
 class FC_Fusion_Layer(nn.Module):
@@ -247,6 +249,98 @@ class EXP_2_FC_Fusion_Layer(nn.Module):
         x = self.fusion(combined_classes)
         
         return x
+
+class fc_bilinear_fusion(nn.Module):
+    def __init__(self):
+        super(fc_bilinear_fusion, self).__init__()
+        self.fusion = nn.Bilinear(256, 256, 256)
+
+    def forward(self, class_one, class_two):
+        c_one = torch.flatten(class_one, 1)
+        c_two = torch.flatten(class_two, 1)
+
+        output = self.fusion(c_one, c_two)
+        return output
+    
+class compact_bilinear_fusion(nn.Module):
+    def __init__(self):
+        super(compact_bilinear_fusion, self).__init__()
+        self.input_dim1 = 256
+        self.input_dim2 = 256
+        self.output_dim = 256
+        self.sum_pool = True
+        rand_h_1=None
+        rand_s_1=None
+        rand_h_2=None
+        rand_s_2=None
+        cuda = True
+        
+        if rand_h_1 is None:
+            np.random.seed(1)
+            rand_h_1 = np.random.randint(self.output_dim, size=self.input_dim1)
+        if rand_s_1 is None:
+            np.random.seed(3)
+            rand_s_1 = 2 * np.random.randint(2, size=self.input_dim1) - 1
+
+        self.sparse_sketch_matrix1 = Variable(self.generate_sketch_matrix(rand_h_1, rand_s_1, self.output_dim))
+
+        if rand_h_2 is None:
+            np.random.seed(5)
+            rand_h_2 = np.random.randint(self.output_dim, size=self.input_dim2)
+        if rand_s_2 is None:
+            np.random.seed(7)
+            rand_s_2 = 2 * np.random.randint(2, size=self.input_dim2) - 1
+
+        self.sparse_sketch_matrix2 = Variable(self.generate_sketch_matrix(
+            rand_h_2, rand_s_2, self.output_dim))
+
+        if cuda:
+            self.sparse_sketch_matrix1 = self.sparse_sketch_matrix1.cuda()
+            self.sparse_sketch_matrix2 = self.sparse_sketch_matrix2.cuda()
+            
+    def generate_sketch_matrix(self, rand_h, rand_s, output_dim):
+        rand_h = rand_h.astype(np.int64)
+        rand_s = rand_s.astype(np.float32)
+        assert(rand_h.ndim == 1 and rand_s.ndim ==
+               1 and len(rand_h) == len(rand_s))
+        assert(np.all(rand_h >= 0) and np.all(rand_h < output_dim))
+
+        input_dim = len(rand_h)
+        indices = np.concatenate((np.arange(input_dim)[..., np.newaxis],
+                                  rand_h[..., np.newaxis]), axis=1)
+        indices = torch.from_numpy(indices)
+        rand_s = torch.from_numpy(rand_s)
+        sparse_sketch_matrix = torch.sparse.FloatTensor(
+            indices.t(), rand_s, torch.Size([input_dim, output_dim]))
+        return sparse_sketch_matrix.to_dense()
+        
+    def forward(self, class_one, class_two):
+        batch_size, depth, height, width = class_one.size()
+        
+        class_one_flat = class_one.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim1)
+        class_two_flat = class_two.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim2)
+        
+        sketch_1 = class_one_flat.mm(self.sparse_sketch_matrix1)
+        sketch_2 = class_two_flat.mm(self.sparse_sketch_matrix2)
+        
+        fft1_real = afft.fft(sketch_1)
+        fft1_imag = afft.fft(Variable(torch.zeros(sketch_1.size())).cuda())
+        fft2_real = afft.fft(sketch_2)
+        fft2_imag = afft.fft(Variable(torch.zeros(sketch_2.size())).cuda())
+
+        fft_product_real = fft1_real.mul(fft2_real) - fft1_imag.mul(fft2_imag)
+        fft_product_imag = fft1_real.mul(fft2_imag) + fft1_imag.mul(fft2_real)
+
+        cbp_flat = afft.ifft(fft_product_real)
+        #cbd_flat_2 = afft.ifft(fft_product_imag)[0]
+
+        cbp = cbp_flat.view(batch_size, height, width, self.output_dim)
+
+        if self.sum_pool:
+            cbp = cbp.sum(dim=1).sum(dim=1)
+        
+        return cbp.float()
+
     
 class Post_Fusion_Layer(nn.Module):
     def __init__(self):
@@ -293,7 +387,11 @@ class EXP2_Full_Network(nn.Module):
         self.pre_net_one = ir_net
         self.pre_net_two = rgb_net
         self.fusion_type = fusion_type
-        if self.fusion_type == 'SD':
+        if self.fusion_type == 'FC-BF':
+            self.fuse = fc_bilinear_fusion()
+        elif self.fusion_type == 'C-BF':
+            self.fuse = compact_bilinear_fusion()
+        elif self.fusion_type == 'SD':
             self.fuse = EXP2_Same_Dim_Fusion_Layer()
         elif self.fusion_type == 'FC':
             self.fuse = EXP_2_FC_Fusion_Layer()
@@ -337,19 +435,15 @@ def freeze(model):
     for params in model.parameters():
         params.requires_grad = False   
     
-def Algorithm_One(model, fusion_type):
+def Algorithm_One(model):
     params = model.state_dict()
    # print(params)
-    if fusion_type == 'FC':
-        fw_1 = params['fuse.fusion.weight'] #[192, 6, 6]
-        f_weight_one = sort_rows_single(fw_1)
-        params['fuse.fusion.weight'].copy_(f_weight_one)
-    else:
-        fw_1 = params['fuse.feature_weight_one'] #[192, 6, 6]
-        fw_2 = params['fuse.feature_weight_two'] #[192, 6, 6]
-        f_weight_one, f_weight_two = sort_rows(fw_1, fw_2)
-        params['fuse.feature_weight_one'].copy_(f_weight_one)
-        params['fuse.feature_weight_two'].copy_(f_weight_two)
+    fw_1 = params['fuse.feature_weight_one'] #[192, 6, 6]
+    fw_2 = params['fuse.feature_weight_two'] #[192, 6, 6]
+    #print(fw_1.shape)
+    f_weight_one, f_weight_two = sort_rows(fw_1.view(-1, 256*1*1), fw_2.view(-1, 256*1*1))
+    params['fuse.feature_weight_one'].copy_(f_weight_one.view(256, 1, 1))
+    params['fuse.feature_weight_two'].copy_(f_weight_two.view(256, 1, 1))
 
 
 def projection_weight_cal(element_list):
@@ -362,15 +456,6 @@ def projection_weight_cal(element_list):
         element_list[i] = max(element_list[i]+lam,0)
     return element_list
 
-def projection_weight_cal_single(element_list):
-    for j in range(0,len(element_list)):
-        value = element_list[0][j] + (1-sum(element_list[0][0:j+1]))/(j+1)
-        if value > 0:
-            index = j+1
-    lam = 1/(index)*(1-sum(element_list[0][0:index]))
-    for i in range(0 , len(element_list)):
-        element_list[0][i] = max(element_list[0][i]+lam,0)
-    return element_list
 
 def sort_rows(T_1, T_2):
     T_1 = T_1.t()
@@ -391,19 +476,3 @@ def sort_rows(T_1, T_2):
     T_2 = T_2.t()
     
     return (T_1, T_2)
-
-
-def sort_rows_single(T_1):
-    T_1 = T_1.t()
-    T_1 = T_1.cpu()
-    tensor_one = T_1.numpy()
-
-    for i in range(0 , len(tensor_one)):
-        tensor_one_element = tensor_one[i]
-        element_list = [tensor_one_element]
-        element_list.sort(reverse=True)
-        updated_weights = projection_weight_cal_single(element_list)
-        tensor_one[i] = updated_weights[0]
-    T_1 = T_1.t()
-    
-    return (T_1)
