@@ -164,7 +164,7 @@ def test_class_probabilities(model, device, test_loader, which_class):
     return [i.item() for i in actuals], [i.item() for i in probabilities]
 
 def plot_acc_vs_epoch(acc_1, acc_2, acc_3, acc_4, acc_5, acc_6, acc_7, acc_8):
-    plt.plot(acc_1, label='Gray')
+    plt.plot(acc_1, label='IR')
     plt.plot(acc_2, label='RGB')
     plt.plot(acc_3, label='Pre-Train')
     plt.plot(acc_4, label='W/O Pre-train')

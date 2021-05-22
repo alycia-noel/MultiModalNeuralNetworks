@@ -1,0 +1,2 @@
+IR Testing Accuracy: 0.5	 F1: 0.5
+IR Testing Accuracy: 0.47	 F1: 0.47

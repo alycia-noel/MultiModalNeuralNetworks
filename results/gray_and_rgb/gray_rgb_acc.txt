@@ -1,6 +1,0 @@
-Gray Accuracy:                                  0.7006666666666667
-RGB Accuracy:                                   0.665
-Joint Training Fully-Connected Fusion Accuracy: 0.6546666666666666	
-With Pre-Fusion Training Accuracy:              0.8213333333333334	 
-Without Pre-Fusion Training Accuracy:           0.7903333333333333	
-Joint Training Same Dimension Fusion Accuracy:  0.8046666666666666	
